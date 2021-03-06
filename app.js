@@ -11,7 +11,7 @@ const web = new WebClient(token);
 // result.then((response) => console.log(response));
 
 const app = express();
-const port = 5000;
+const port = process.env.PORT;
 
 app.use(express.json());
 app.use(express.urlencoded());
@@ -309,13 +309,22 @@ app.post("/slack/interactive", (req, res) => {
         },
       });
     },
-    numbers: () => {},
+    numbers: () => {
+      web.chat.postEphemeral({
+        channel: payload.container.channel_id,
+        user: payload.user.id,
+        attachments: [],
+        text: "Thank you",
+      });
+    },
   };
-  console.log(payload.actions[0].action_id);
-
-  whichResponse[payload.actions[0].action_id]
-    ? whichResponse[payload.actions[0].action_id]()
-    : res.status(500);
+  if (payload.type === "block_actions") {
+    whichResponse[payload.actions[0].action_id]
+      ? whichResponse[payload.actions[0].action_id]()
+      : res.status(500);
+  } else if (payload.type === "view_submission") {
+    whichResponse.numbers();
+  }
 });
 
 app.listen(port, () => {
