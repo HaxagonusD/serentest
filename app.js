@@ -1,8 +1,23 @@
 import express from "express";
 import { WebClient } from "@slack/web-api";
 import dotenv from "dotenv";
+import mongoose from "mongoose";
 
 dotenv.config();
+//warning about mongoError can be ignored
+mongoose.connect(`${process.env.MONGODB_CONNECTION_STRING}`, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useFindAndModify: false,
+  useCreateIndex: true,
+});
+
+const responseSchema = new mongoose.Schema(
+  { name: "string" },
+  { strict: false }
+);
+const Response = new mongoose.model("Response", responseSchema);
+
 const token = process.env.SLACK_TOKEN;
 const web = new WebClient(token);
 
@@ -86,12 +101,20 @@ app.post("/hello", (req, res) => {
     .catch((err) => console.log(err));
 });
 
+app.get("/responses", (req, res) => {
+  Response.find().then((allDocuments) => {
+    res.json(allDocuments);
+  });
+});
+
 app.post("/slack/interactive", (req, res) => {
   let { payload } = req.body;
   payload = JSON.parse(payload);
 
   console.log("Parsed Payload ", payload);
   res.status(200).end();
+  const tempResponse = new Response({ ...payload });
+  tempResponse.save();
   const whichResponse = {
     feeling: () => {
       web.chat
@@ -301,21 +324,22 @@ app.post("/slack/interactive", (req, res) => {
                 action_id: "numbers",
                 placeholder: {
                   type: "plain_text",
-                  text: "Enter your anser here",
+                  text: "Enter your answer here",
                 },
               },
             },
           ],
         },
       });
-    },
-    numbers: () => {
       web.chat.postEphemeral({
         channel: payload.container.channel_id,
         user: payload.user.id,
         attachments: [],
         text: "Thank you",
       });
+    },
+    numbers: () => {
+      /*Save response*/
     },
   };
   if (payload.type === "block_actions") {
