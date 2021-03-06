@@ -95,11 +95,11 @@ app.post("/slack/interactive", (req, res) => {
   const whichResponse = {
     feeling: () => {
       web.chat
-        .postMessage({
+        .postEphemeral({
           channel: payload.container.channel_id,
+          user: payload.user.id,
           attachments: [],
           text: "When are you free for a walk?",
-          user: payload.user.id,
           blocks: [
             {
               type: "section",
@@ -220,10 +220,98 @@ app.post("/slack/interactive", (req, res) => {
     time: () => {
       /*save response to the database*/
     },
-    day: () => {},
-    hobbies: () => {},
+    day: () => {
+      web.chat.postEphemeral({
+        channel: payload.container.channel_id,
+        user: payload.user.id,
+        attachments: [],
+        text: "What are your favorite hobbies",
+        blocks: [
+          {
+            type: "section",
+            text: {
+              type: "plain_text",
+              text: "What are your favorite hobbies",
+            },
+            accessory: {
+              type: "multi_static_select",
+              action_id: "hobbies",
+              placeholder: {
+                type: "plain_text",
+                text: "What are your favorite hobbies",
+              },
+              options: [
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Football",
+                  },
+                  value: "Football",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Music",
+                  },
+                  value: "Music",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Sleep",
+                  },
+                  value: "Sleep",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Movies",
+                  },
+                  value: "Movies",
+                },
+                {
+                  text: {
+                    type: "plain_text",
+                    text: "Basketball",
+                  },
+                  value: "Basketball",
+                },
+              ],
+            },
+          },
+        ],
+      });
+    },
+    hobbies: () => {
+      web.views.open({
+        trigger_id: payload.trigger_id,
+        view: {
+          type: "modal",
+          title: {
+            type: "plain_text",
+            text: "Numbers",
+          },
+          submit: { type: "plain_text", text: "Submit" },
+          blocks: [
+            {
+              type: "input",
+              label: { type: "plain_text", text: "Your answer" },
+              element: {
+                type: "plain_text_input",
+                action_id: "numbers",
+                placeholder: {
+                  type: "plain_text",
+                  text: "Enter your anser here",
+                },
+              },
+            },
+          ],
+        },
+      });
+    },
     numbers: () => {},
   };
+  console.log(payload.actions[0].action_id);
 
   whichResponse[payload.actions[0].action_id]
     ? whichResponse[payload.actions[0].action_id]()
