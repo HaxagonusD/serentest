@@ -2,9 +2,11 @@ import express from "express";
 import { WebClient } from "@slack/web-api";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
+// mongoose.set("bufferCommands", false);
 
 dotenv.config();
 //warning about mongoError can be ignored
+//
 mongoose.connect(`${process.env.MONGODB_CONNECTION_STRING}`, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
